@@ -1,15 +1,27 @@
+import { db } from '../db';
+import { taxesTable } from '../db/schema';
 import { type CreateTaxInput, type Tax } from '../schema';
 
-export async function createTax(input: CreateTaxInput): Promise<Tax> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new tax configuration and persisting it in the database.
-    // It should validate the tax rate is within acceptable range and insert the tax data.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createTax = async (input: CreateTaxInput): Promise<Tax> => {
+  try {
+    // Insert tax record
+    const result = await db.insert(taxesTable)
+      .values({
         name: input.name,
-        rate: input.rate,
-        is_active: input.is_active ?? true,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as Tax);
-}
+        rate: input.rate.toString(), // Convert number to string for numeric column
+        is_active: input.is_active ?? true // Apply default if not provided
+      })
+      .returning()
+      .execute();
+
+    // Convert numeric fields back to numbers before returning
+    const tax = result[0];
+    return {
+      ...tax,
+      rate: parseFloat(tax.rate) // Convert string back to number
+    };
+  } catch (error) {
+    console.error('Tax creation failed:', error);
+    throw error;
+  }
+};

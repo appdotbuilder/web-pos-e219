@@ -1,22 +1,46 @@
+import { db } from '../db';
+import { staffTable } from '../db/schema';
 import { type Staff } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function getStaff(): Promise<Staff[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all staff members from the database.
-    // It should return an array of all staff members, optionally filtered by active status.
-    return [];
+  try {
+    const results = await db.select()
+      .from(staffTable)
+      .execute();
+
+    // No numeric field conversions needed for staff table
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch staff:', error);
+    throw error;
+  }
 }
 
 export async function getStaffById(staffId: number): Promise<Staff | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching a single staff member by ID.
-    // It should return the staff member if found, or null if not found.
-    return null;
+  try {
+    const results = await db.select()
+      .from(staffTable)
+      .where(eq(staffTable.id, staffId))
+      .execute();
+
+    return results.length > 0 ? results[0] : null;
+  } catch (error) {
+    console.error('Failed to fetch staff by ID:', error);
+    throw error;
+  }
 }
 
 export async function getActiveStaff(): Promise<Staff[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching only active staff members.
-    // It should return an array of staff members where is_active = true.
-    return [];
+  try {
+    const results = await db.select()
+      .from(staffTable)
+      .where(eq(staffTable.is_active, true))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch active staff:', error);
+    throw error;
+  }
 }

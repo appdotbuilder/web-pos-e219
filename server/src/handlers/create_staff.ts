@@ -1,16 +1,39 @@
+import { db } from '../db';
+import { staffTable } from '../db/schema';
 import { type CreateStaffInput, type Staff } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function createStaff(input: CreateStaffInput): Promise<Staff> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new staff member and persisting it in the database.
-    // It should validate the email is unique, insert the staff data, and return the created staff member.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createStaff = async (input: CreateStaffInput): Promise<Staff> => {
+  try {
+    // Check if email already exists
+    const existingStaff = await db.select()
+      .from(staffTable)
+      .where(eq(staffTable.email, input.email))
+      .limit(1)
+      .execute();
+
+    if (existingStaff.length > 0) {
+      throw new Error('Staff member with this email already exists');
+    }
+
+    // Insert staff record with proper defaults
+    const result = await db.insert(staffTable)
+      .values({
         name: input.name,
         email: input.email,
         role: input.role,
-        is_active: input.is_active ?? true,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as Staff);
-}
+        is_active: input.is_active ?? true // Apply default if not provided
+      })
+      .returning()
+      .execute();
+
+    const staff = result[0];
+    return {
+      ...staff,
+      // No numeric conversions needed for this table - all fields are proper types
+    };
+  } catch (error) {
+    console.error('Staff creation failed:', error);
+    throw error;
+  }
+};
